@@ -8,10 +8,10 @@ class RegleFiltrage:
     """
     def __init__(self, ip_source: str, protocole: str, port_dest: str, action: str):
         """
-        :param ip_source: IP précise (ex: '192.168.1.50'), plage CIDR (ex: '192.168.1.0/24') ou 'any'.
-        :param protocole: 'TCP', 'UDP', 'ICMP' ou 'any'.
-        :param port_dest: Un entier sous forme de chaîne (ex: '80') ou 'any'.
-        :param action: 'AUTORISER' ou 'BLOQUER'.
+        ip_source: IP précise (ex: '192.168.1.50'), plage CIDR (ex: '192.168.1.0/24') ou 'any'.
+        protocole: 'TCP', 'UDP', 'ICMP' ou 'any'.
+        port_dest: Un entier sous forme de chaîne (ex: '80') ou 'any'.
+        action: 'AUTORISER' ou 'BLOQUER'.
         """
         self.ip_source = ip_source
         self.protocole = protocole.upper()
@@ -113,13 +113,12 @@ class GestionnaireFirewall:
         Inspecte un paquet par rapport aux règles. 
         Retourne True si le paquet passe, False s'il est bloqué.
         """
-        # On parcourt les règles dans l'ordre de leur ajout (première correspondance appliquée)
+
         for regle in self.regles:
             if regle.correspond(paquet, port_dest):
                 self.journal.ajouter_log(regle.action, paquet, port_dest, f"Correspond à la règle Src:{regle.ip_source}")
                 return regle.action == "AUTORISER"
 
-        # Politique par défaut si aucune règle ne correspond : On autorise
-        # (On peut aussi choisir de tout bloquer par défaut, au choix du groupe)
-        self.journal.ajouter_log("AUTORISER", paquet, port_dest, "Aucune règle correspondante (Politique par défaut)")
-        return True
+        # Par défaut si aucune règle ne correspond : On bloquera le paquet
+        self.journal.ajouter_log("BLOQUER", paquet, port_dest, "Aucune règle correspondante")
+        return False
