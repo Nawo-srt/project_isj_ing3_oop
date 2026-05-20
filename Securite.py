@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 from datetime import datetime
 import ipaddress
 from Paquets import Paquet
@@ -123,3 +124,6 @@ class GestionnaireFirewall:
         # (On peut aussi choisir de tout bloquer par défaut, au choix du groupe)
         self.journal.ajouter_log("AUTORISER", paquet, port_dest, "Aucune règle correspondante (Politique par défaut)")
         return True
+=======
+#FICHIER POUR L'AUTHENTIFICATION DES TRANSITS SUR LE FIREWALL ET LA JOURNALISATION.
+>>>>>>> 107cbbce5365f1ee80afa660950bc5ae95e9afc8
