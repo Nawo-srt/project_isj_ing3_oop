@@ -90,4 +90,43 @@ class MoniteurReseau:
         print("-"*10 + "\n")
 
     def generer_rapport(self):
-        pass
+        """Genere un rapport dans rapport_simnet.txt."""
+        actifs, inactifs = self.get_equipements_actifs()
+
+        with open("rapport_simnet.txt", "w") as f:
+
+            f.write("RAPPORT - SIMNet\n")
+            f.write("-"*10 + "\n\n")
+
+            f.write("EQUIPEMENTS ACTIFS : " + ", ".join(actifs) + "\n")
+            f.write("EQUIPEMENTS INACTIFS : " + ", ".join(inactifs) + "\n\n")
+
+            f.write("STATISTIQUES PAR EQUIPEMENT\n")
+            for nom, stats in self.stats_equipements.items():
+                f.write(f"  {nom} -> Transmis: {stats['transmis']} | Perdus: {stats['perdus']}\n")
+
+            f.write("\nUTILISATION DES LIENS\n")
+            if self.stats_liens:
+                for (e1, e2), stats in self.stats_liens.items():
+                    taux = (stats["octets"] / (stats["bande_passante"] * 1_000_000)) * 100
+                    f.write(f"  {e1} <-> {e2} -> {stats['octets']} octets | Taux: {taux:.2f}%\n")
+            else:
+                f.write("  Aucun lien utilise.\n")
+
+            f.write("\nHISTORIQUE DES 10 DERNIERS PAQUETS\n")
+            if self.historique_paquets:
+                for entree in self.historique_paquets:
+                    statut = "OK" if entree["succes"] else "PERDU"
+                    chemin_str = " -> ".join(entree["chemin"]) if entree["chemin"] else "N/A"
+                    f.write(f"  [{entree['horodatage']}] {entree['paquet'].source} -> "
+                            f"{entree['paquet'].destination} | {statut} | Chemin: {chemin_str}\n")
+            else:
+                f.write("  Aucun paquet enregistre.\n")
+
+        print("Rapport genere : rapport_simnet.txt")
+
+
+
+
+
+
