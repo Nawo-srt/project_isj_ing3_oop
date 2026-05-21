@@ -1,94 +1,47 @@
-# SIMNet — Simulateur de Réseau Intelligent
+Erwyne mv :
+
+md_content = """# SIMNet — Simulateur de Réseau Intelligent
 
 > Projet de groupe — Programmation Orientée Objet en Python
 > **INGÉNIEUR 3 SRT** · Institut Saint Jean · Année académique 2025-2026
 
 ---
 
-## Description
+## 📖 Description
 
-Ce dépôt est le fork du projet **SIMNet**, contenant la branche du groupe 6 
-composé des étudiants :
-KENGNE TAKOUMBO Ange Naomy, 
-NDJOMO MELINGUI Emilienne Christelle, 
-MVOGO PASSO Erwyne Evrard, 
-BESSIKE TCHEUFFA Samuel Leonard ; 
-de 3ème année Génie Télécom & Réseaux dans le cadre du cours de Programmation Orientée
-Objet en Python.
+Ce dépôt est le projet **SIMNet** réalisé par le **Groupe 6** de 3ème année Génie Télécom & Réseaux dans le cadre du cours de Programmation Orientée Objet en Python.
 
-**SIMNet** est un simulateur de réseau d'entreprise entièrement orienté objet. Il permet
-de modéliser une topologie réseau, de faire circuler des paquets entre équipements,
-d'en assurer la sécurité via un firewall, et d'en superviser le fonctionnement grâce
-à un moniteur réseau.
+**SIMNet** est un simulateur de réseau d'entreprise entièrement orienté objet. Il permet de modéliser une topologie réseau, de faire circuler des paquets entre équipements, d'en assurer la sécurité via un firewall, et d'en superviser le fonctionnement grâce à un moniteur réseau.
 
 ---
 
-## Structure attendue du projet
+## 👥 Équipe et Répartition des Tâches (Groupe 6)
 
-Notre code est organisé selon la structure suivante :
-
-```
-project_isj_ing3_oop/
-│
-├── src/
-│   ├── Equipements.py      # Classes des équipements réseau
-│   ├── Topologie.py        # Topologie et liens
-│   ├── Paquets.py          # Paquet et simulation de trafic
-│   ├── Securite.py         # Firewall, règles, journal
-│   ├── Moniteur.py         # Moniteur réseau et rapports
-│   └── main.py             # Point d'entrée et menu interactif
-│
-├── Rapport.pdf             # Rapport technique
-└── README.md               # Description brève du projet
-```
-
----
-
-## Lancement
-
-```bash
-python src/main.py
-```
-
-> Python 3.8+ requis. Aucune dépendance externe.
-
-## Modules fonctionnels
-
-| Module | Description |
-|--------|-------------|
-| 1 — Modélisation | Équipements réseau, topologie, liens |
-| 2 — Trafic | Paquets, routage saut par saut, statistiques |
-| 3 — Sécurité | Firewall, règles de filtrage, journal horodaté |
-| 4 — Surveillance | Moniteur réseau, métriques, export rapport |
-| 5 — Interface | Menu console interactif |
-
----
-
-## Groupes
-
-| Branche | Groupe | Membres |
+| Membre | Rôle / Module attribué | Statut d'avancement |
 |---------|--------|---------|
-| `group_6` | 6 | Kengne, Ndjomo, Mvogo, Bessike |
-
-> Ce tableau sera mis à jour par l'examinateur au démarrage du projet.
-
----
-
-## Évaluation
-
-| Critère | Points |
-|---------|--------|
-| Fonctionnement du simulateur | 6 |
-| Qualité de la modélisation POO | 5 |
-| Couverture des concepts du cours | 4 |
-| Rapport technique | 3 |
-| Soutenance et maîtrise individuelle | 2 |
-| **Total** | **20** |
+| **MVOGO PASSO Erwyne Evrard** | Interface utilisateur, orchestration (`main.py`) | ✅ Terminé (V1) |
+| **NDJOMO MELINGUI Emilienne Christelle** | Trafic et routage (`Paquets.py`) | ⏳ En cours |
+| **BESSIKE TCHEUFFA Samuel Leonard** | Supervision et statistiques (`Moniteur.py`) | ⏳ En cours |
+| **KENGNE TAKOUMBO Ange Naomy** | Modélisation, Topologie & Sécurité | ✅ Terminé |
 
 ---
 
-##  Examinateur
+## 🚀 État d'avancement actuel
 
-**M. Stephane Fedim**  
-Institut Saint Jean - Parcours Ingénieur
-Année académique 2025-2026 · Semestre 2
+Concrètement, le projet est fonctionnel sur les aspects structurels et de sécurité, en attendant l'intégration finale du trafic et du dashboard.
+
+### Ce qui est réalisé :
+- **Modélisation (`Equipements.py`) :** Classes robustes avec héritage pour `Routeur`, `Switch`, `Serveur`, `Firewalls`, `PointAccesWifi` et `Client`.
+- **Liaison (`Topologie.py`) :** Agrégation des équipements et création logique des liens avec gestion de la bande passante et de la latence.
+- **Sécurité (`Securite.py`) :** Implémentation du système de règles de filtrage (gestion des IP, ports, sous-réseaux CIDR), authentification admin et historisation des événements via un journal de sécurité.
+- **Interface Console (`main.py`) :** Menu interactif permettant d'initialiser une topologie par défaut, de l'afficher et de configurer dynamiquement le pare-feu.
+
+### Ce qui reste à finaliser :
+- **Trafic (`Paquets.py`) :** Logique d'encapsulation et de transfert de nœud en nœud.
+- **Supervision (`Moniteur.py`) :** Collecte des données de transit et génération de rapports.
+
+---
+
+## 📂 Structure de l'architecture
+
+Notre code est organisé de la façon suivante :
