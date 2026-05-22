@@ -1,4 +1,7 @@
-class Equipement :
+from abc import abstractmethod
+
+
+class Equipement(ABC) :
     """Modélise un équipement réseau : chaque équipement a un nom, une marque, une adresse IP et un état (actif ou inactif)"""
     
     def __init__ (self, nom, marque, adresse_ip) :
@@ -23,6 +26,7 @@ class Equipement :
     def __repr__ (self) :
         return f"(debug) : Equipement (nom = {self.nom} , ip = {self.adresse_ip})"
     
+    @abstractmethod
     def afficher_infos(self):
         statut = "ACTIF" if self.est_actif else "INACTIF"
         print(f"  Nom    : {self.nom}")
