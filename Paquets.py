@@ -65,7 +65,7 @@ class SimulateurTrafic:
             if courant == arrivee_nom:
                 return chemin
 
-            # Trouver tous less voisins de l'équipement courant via les liens de la topologie
+            # Trouver tous los voisins de l'équipement courant via les liens de la topologie
             for lien in self.topologie.liens:
                 voisin = None
                 if lien.equipement1.nom == courant:
