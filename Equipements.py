@@ -1,114 +1,126 @@
-class Equipement() :
-    """Modélise un équipement réseau : chaque équipement a un nom, une marque, une adresse IP et un état (actif ou inactif)"""
+import ipaddress
+        
+class Equipement:
+    """
+    Classe de base représentant un équipement générique dans le réseau.
+    Fournit les attributs et méthodes communs à tous les équipements.
+    """
     
-    def __init__ (self, nom, marque, adresse_ip) :
+    def __init__(self, nom: str, marque: str, ip: str, statut: bool = True):
+        """
+        Initialise un nouvel équipement réseau.
+        
+        nom: Le nom de l'équipement (ex: 'Routeur-Accueil').
+        marque: La marque de l'équipement (ex: 'Cisco', 'Juniper').
+        ip: L'adresse IPv4 de l'équipement.
+        statut: L'état de l'équipement (True = actif, False = inactif). Par défaut à True.
+        """
         self.nom = nom
         self.marque = marque
-        self.adresse_ip = adresse_ip
-        self.est_actif = False
-    
-    def activer (self) :
-        self.est_actif = True
-    
-    def desactiver (self) :
-        self.est_actif = False
-   
-    def __str__ (self) :
-        if self.est_actif == True :
-            etat = "ACTIF"
-        else :
-            etat = "INACTIF"
-        return f"[{etat}] {self.nom} ({self.marque}) -- {self.adresse_ip}"
-    
-    def __repr__ (self) :
-        return f"(debug) : Equipement (nom = {self.nom} , ip = {self.adresse_ip})"
-    
-    def afficher_infos(self):
-        statut = "ACTIF" if self.est_actif else "INACTIF"
-        print(f"  Nom    : {self.nom}")
-        print(f"  Marque : {self.marque}")
-        print(f"  IP    : {self.adresse_ip}")
-        print(f"  Statut : {statut}")
+        self.ip = ip
+        self.statut = statut
 
+        #CONTRÔLE DU FORMAT DE L'ADRESSE IPv4
+        try:
+            # Tente de créer un objet IPv4. Si l'IP est fausse (ex: 999.0.0.1 ou une chaîne non IP), 
+            # cela déclenchera une erreur AddressValueError.
+            ipaddress.IPv4Address(ip)
+            self.ip = ip
+        except ipaddress.AddressValueError:
+            # On stoppe le programme et on lève une erreur claire si le format est mauvais
+            raise ValueError(f"[ERREUR] Impossible de créer '{nom}'. L'adresse IP '{ip}' n'est pas une adresse IPv4 valide.")
+
+    def activer(self):
+        """Active l'équipement sur le réseau."""
+        self.statut = True
+
+    def desactiver(self):
+        """Désactive l'équipement (ne pourra plus envoyer/recevoir de paquets)."""
+        self.statut = False
+
+    def __str__(self):
+        """Représentation textuelle de l'équipement pour faciliter l'affichage."""
+        etat = "Actif" if self.statut else "Inactif"
+        return f"[{etat}] {self.nom} ({self.marque}) - IP: {self.ip}"
+    
 class Routeur(Equipement):
-    """Un routeur est un équipement qui a des interfaces réseau et une table de routage pour acheminer les paquets vers les réseaux appropriés."""
-    
-    def __init__(self, nom, marque, adresse_ip, nb_interfaces):
-        super().__init__(nom, marque, adresse_ip)
-        self.nb_interfaces = nb_interfaces
-        self.table_routage = []
-        
-    def ajouter_route(self, reseau):
-        self.table_routage.append(reseau)
-    
-    def afficher_infos(self):
-        super().afficher_infos()
-        print(f"  Interfaces : {self.nb_interfaces}")
-        print(f"  Table de routage : {self.table_routage}")
+    """
+    Représente un routeur. 
+    Spécificité : Gère une table de routage pour diriger les paquets.
+    """
+    def __init__(self, nom: str, marque: str, ip: str, statut: bool = True):
+        super().__init__(nom, marque, ip, statut)
+        # La table de routage est un dictionnaire {destination: prochain_saut}
+        self.table_routage = {}
+
+    def ajouter_route(self, destination: str, prochain_saut: str):
+        """Ajoute une entrée dans la table de routage."""
+        self.table_routage[destination] = prochain_saut
+
 
 class Switch(Equipement):
-    """Un switch est un équipement qui connecte plusieurs appareils sur un réseau local (LAN) et permet la communication entre eux en utilisant des adresses MAC pour acheminer les données vers les ports appropriés."""
-    def __init__(self, nom, marque, adresse_ip, nb_ports) :
-        super().__init__(nom, marque, adresse_ip)
-        self.nb_ports = nb_ports
-        self.vlan_actifs = []
-    
-    def ajouter_vlan(self, vlan_id) :
-        self.vlan_actifs.append(vlan_id)
-    
-    def afficher_infos(self) :
-        super().afficher_infos()
-        print(f"  Ports : {self.nb_ports}")
-        print(f"  VLAN actifs : {self.vlan_actifs}")
-        
+    """
+    Représente un commutateur (switch).
+    Spécificité : Gère des VLANs (Virtual Local Area Networks).
+    """
+    def __init__(self, nom: str, marque: str, ip: str, statut: bool = True):
+        super().__init__(nom, marque, ip, statut)
+        # Liste des identifiants de VLANs configurés sur ce switch
+        self.vlans = []
+
+    def ajouter_vlan(self, vlan_id: int):
+        """Ajoute un VLAN au switch."""
+        if vlan_id not in self.vlans:
+            self.vlans.append(vlan_id)
+
+
 class Serveur(Equipement):
-    """Un serveur est un équipement qui fournit des services ou des ressources à d'autres appareils sur le réseau, tels que l'hébergement de sites web, la gestion de bases de données ou la fourniture de services de messagerie."""
-    def __init__(self, nom, marque, adresse_ip, ram_go, cpu_coeurs) :
-        super().__init__(nom, marque, adresse_ip)
-        self.ram_go = ram_go
-        self.cpu_coeurs = cpu_coeurs
+    """
+    Représente un serveur d'entreprise.
+    Spécificité : Expose des services (ex: HTTP, FTP, DNS).
+    """
+    def __init__(self, nom: str, marque: str, ip: str, statut: bool = True):
+        super().__init__(nom, marque, ip, statut)
+        # Liste des services exposés par le serveur
         self.services = []
-    
-    def demarrer_service(self, service) :
-        if service not in self.service :
+
+    def ajouter_service(self, service: str):
+        #Ajoute un service actif sur le serveur.
+        if service not in self.services:
             self.services.append(service)
-    
-    def afficher_infos(self) :
-        super().afficher_infos()
-        print(f"  RAM : {self.ram_go} Go")
-        print(f"  Coeurs du CPU : {self.cpu_coeurs}")
-        print(f"  Services pris en charge : {self.services}")
 
-class Firewalls(Equipement):
-    """Un firewall est un équipement de sécurité réseau qui contrôle le trafic entrant et sortant en appliquant des règles de filtrage."""
-    def __init__(self, nom, marque, adresse_ip, regle_filtrage) :
-        super().__init__(nom, marque, adresse_ip)
-        self.regle_filtrage = []
 
-    def ajouter_regle(self,regle):
-        self.regle_filtrage.append(regle)
+class Firewall(Equipement):
+    """
+    Représente un pare-feu (Firewall).
+    Spécificité : Applique des règles de filtrage pour la sécurité.
+    """
+    def __init__(self, nom: str, marque: str, ip: str, statut: bool = True):
+        super().__init__(nom, marque, ip, statut)
+        # Les règles sont gérées plus en détail dans le Module 3
+        self.regles_filtrage = []
 
-    def afficher_infos(self):
-        super().afficher_infos()
-        print(f"   Regles de filtrage : {self.regle_filtrage}")
+    def ajouter_regle(self, regle):
+        """Ajoute une règle de filtrage."""
+        self.regles_filtrage.append(regle)
 
-class PointAccesWifi(Equipement):
-    """Un point d'accès Wi-Fi est un équipement qui permet aux appareils de se connecter à un réseau sans fil (Wi-Fi) en fournissant une connexion sans fil à Internet ou à un réseau local."""
-    def __init__(self, nom, marque, adresse_ip,wifi_connecte):
-        super().__init__(nom, marque, adresse_ip)
-        self.wifi_connecte = wifi_connecte
-    
-    def afficher_infos(self):
-        super().afficher_infos()
-        print(f"   Wifi connecte : {self.wifi_connecte}")
+
+class PointAccesWiFi(Equipement):
+    """
+    Représente un point d'accès Wi-Fi.
+    Permet aux terminaux sans fil de se connecter au réseau.
+    """
+    def __init__(self, nom: str, marque: str, ip: str, ssid: str, statut: bool = True):
+        super().__init__(nom, marque, ip, statut)
+        # Nom du réseau sans fil diffusé
+        self.ssid = ssid
+
 
 class Client(Equipement):
-    """Un client est un équipement connecté, un terminal à un réseau et qui utilise les services fournis par d'autres équipements."""
-    def __init__(self, nom, marque, adresse_ip, passerelle):
-        super().__init__(nom, marque, adresse_ip)
+    """
+    Représente un terminal client (ordinateur, smartphone, etc.).
+    """
+    def __init__(self, nom: str, marque: str, ip: str, passerelle: str = None, statut: bool = True):
+        super().__init__(nom, marque, ip, statut)
+        # Un client a généralement besoin de l'adresse IP de sa passerelle par défaut (le routeur)
         self.passerelle = passerelle
-
-    def afficher_infos(self):
-        super().afficher_infos()
-        print(f"   Passerelle par defaut : {self.passerelle}")
-    

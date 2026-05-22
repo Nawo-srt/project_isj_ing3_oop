@@ -1,114 +1,103 @@
-#POUR L'UTILISATION DE NOS DIFFERENTES FONCTIONS DANS LE MENU INTERACTIF : ERWYNE.
-
-# project_isj_ing3_oop-group_6/main.py
-
-import sys
-from Equipements import Routeur, Switch, Serveur, Firewalls, PointAccesWifi, Client
 from Topologie import Topologie
-from Securite import GestionnaireFirewall, RegleFiltrage
+from Equipements import Routeur, Client, Serveur, Firewall
+from Paquets import Paquet, SimulateurTrafic
 from Moniteur import MoniteurReseau
-# from Paquets import Paquet  # À décommenter quand Christelle aura fini
+from Securite import GestionnaireFirewall
 
 def afficher_menu():
-    """Affiche le menu principal de l'application."""
-    print("\n" + "="*50)
-    print("      SIMNet - Simulateur de Réseau Intelligent")
-    print("                 INGÉNIEUR 3 SRT")
-    print("="*50)
-    print("1. Créer et configurer la topologie de base")
-    print("2. Afficher la topologie réseau")
-    print("3. Configurer le Firewall (Règles de sécurité)")
-    print("4. Simuler du trafic réseau (Envoi de paquets)")
-    print("5. Afficher le Moniteur réseau (Statistiques)")
-    print("0. Quitter le simulateur")
-    print("="*50)
-
-def initialiser_topologie_par_defaut(topo: Topologie):
-    """Fonction utilitaire pour créer rapidement un réseau de test."""
-    print("\n[+] Initialisation de la topologie par défaut...")
-    
-    # Création des équipements
-    r1 = Routeur(nom="R1-Core", marque="Cisco", adresse_ip="192.168.0.1", nb_interfaces=4)
-    sw1 = Switch(nom="SW1-LAN", marque="Aruba", adresse_ip="192.168.1.2", nb_ports=24)
-    fw1 = Firewalls(nom="FW-Edge", marque="Fortinet", adresse_ip="192.168.0.254", regle_filtrage=[])
-    srv1 = Serveur(nom="SRV-Web", marque="Dell", adresse_ip="192.168.1.10", ram_go=32, cpu_coeurs=8)
-    pc1 = Client(nom="PC-Admin", marque="Lenovo", adresse_ip="192.168.1.100", passerelle="192.168.1.2")
-
-    # Activation des équipements
-    for eq in [r1, sw1, fw1, srv1, pc1]:
-        eq.activer()
-        topo.ajouter_equipement(eq)
-
-    # Création des liens (nom_eq1, nom_eq2, bande_passante, latence)
-    topo.ajouter_lien("R1-Core", "FW-Edge", bande_passante=1000, latence=2)
-    topo.ajouter_lien("R1-Core", "SW1-LAN", bande_passante=1000, latence=5)
-    topo.ajouter_lien("SW1-LAN", "SRV-Web", bande_passante=10000, latence=1)
-    topo.ajouter_lien("SW1-LAN", "PC-Admin", bande_passante=1000, latence=10)
-
-def menu_securite(fw_manager: GestionnaireFirewall):
-    """Sous-menu pour gérer la sécurité."""
-    print("\n--- CONFIGURATION DU FIREWALL ---")
-    login = input("Login admin : ")
-    mdp = input("Mot de passe : ")
-    
-    if fw_manager.se_connecter(login, mdp):
-        ip_src = input("IP Source (ex: 192.168.1.100 ou ANY) : ")
-        proto = input("Protocole (TCP/UDP/ICMP/ANY) : ")
-        port = input("Port de destination (ex: 80 ou ANY) : ")
-        action = input("Action (AUTORISER/BLOQUER) : ")
-        
-        nouvelle_regle = RegleFiltrage(ip_source=ip_src, protocole=proto, port_dest=port, action=action)
-        fw_manager.ajouter_regle_securisee(nouvelle_regle)
-        fw_manager.se_deconnecter()
+    """Affiche les options disponibles pour l'utilisateur."""
+    print("\n" + "="*45)
+    print("      SIMNet - Menu Principal (Module 5)")
+    print("="*45)
+    print("1. Afficher la topologie du réseau")
+    print("2. Ajouter un nouvel équipement (Client)")
+    print("3. Envoyer un paquet de données")
+    print("4. Consulter le journal de sécurité (Firewall)")
+    print("5. Afficher la surveillance réseau (Temps réel)")
+    print("6. Générer le rapport d'exploitation (.txt)")
+    print("7. Quitter le simulateur")
+    print("="*45)
 
 def main():
-    # Initialisation des objets globaux
-    topologie_actuelle = Topologie()
-    moniteur = MoniteurReseau(topologie_actuelle)
+    # 1. Initialisation des composants centraux
+    topologie = Topologie()
+    simulateur = SimulateurTrafic(topologie)
+    moniteur = MoniteurReseau(topologie, simulateur)
     
-    # Initialisation du gestionnaire Firewall (lié à un équipement virtuel ou physique de la topo)
-    gestionnaire_fw = GestionnaireFirewall(nom_firewall="FW-Edge-Manager", login_admin="admin", mdp_admin="password123")
+    # On crée notre Firewall centralisé
+    fw_physique = Firewall("FW-Entreprise", "PaloAlto", "192.168.0.254")
+    gestionnaire_fw = GestionnaireFirewall(fw_physique.nom)
     
-    reseau_initialise = False
+    # 2. Création d'une topologie de départ (pour éviter de tout taper à chaque fois)
+    print("[INIT] Chargement de la topologie de base...")
+    r1 = Routeur("Routeur-Core", "Cisco", "192.168.0.1")
+    c1 = Client("PC-Alice", "Dell", "192.168.0.10")
+    s1 = Serveur("Serveur-Web", "HP", "192.168.0.100")
+    
+    topologie.ajouter_equipement(r1)
+    topologie.ajouter_equipement(c1)
+    topologie.ajouter_equipement(s1)
+    topologie.ajouter_equipement(fw_physique)
+    
+    topologie.ajouter_lien("PC-Alice", "Routeur-Core", 1000, 2)
+    topologie.ajouter_lien("Routeur-Core", "FW-Entreprise", 10000, 1)
+    topologie.ajouter_lien("FW-Entreprise", "Serveur-Web", 10000, 1)
 
+    # 3. Boucle du menu interactif
     while True:
         afficher_menu()
-        choix = input("Sélectionnez une option (0-5) : ")
+        choix = input("Votre choix (1-7) : ")
 
-        if choix == "1":
-            if not reseau_initialise:
-                initialiser_topologie_par_defaut(topologie_actuelle)
-                reseau_initialise = True
-            else:
-                print("\n[!] La topologie a déjà été initialisée.")
-        
-        elif choix == "2":
-            if reseau_initialise:
-                topologie_actuelle.afficher_topologie()
-            else:
-                print("\n[!] Veuillez d'abord créer la topologie (Option 1).")
+        if choix == '1':
+            topologie.afficher_topologie()
+            
+        elif choix == '2':
+            nom = input("Nom du nouveau client (ex: PC-Bob) : ")
+            ip = input("Adresse IP (ex: 192.168.0.11) : ")
+            nouveau_client = Client(nom, "Lenovo", ip)
+            topologie.ajouter_equipement(nouveau_client)
+            # On le relie automatiquement au routeur pour simplifier
+            topologie.ajouter_lien(nom, "Routeur-Core", 100, 5)
+            print(f"-> {nom} ajouté et connecté au Routeur-Core !")
+
+        elif choix == '3':
+            ip_src = input("IP Source (ex: 192.168.0.10 pour Alice) : ")
+            ip_dst = input("IP Destination (ex: 192.168.0.100 pour Serveur-Web) : ")
+            proto = input("Protocole (TCP/UDP/ICMP) : ").upper()
+            try:
+                # Création du paquet
+                p = Paquet(ip_src, ip_dst, proto, 512, 3)
                 
-        elif choix == "3":
-            menu_securite(gestionnaire_fw)
-            
-        elif choix == "4":
-            print("\n[SIMULATION TRAFIC] - Module en attente d'intégration (Travail de Christelle).")
-            # Exemple de logique future :
-            # p = Paquet(source_ip="192.168.1.100", dest_ip="192.168.1.10", protocole="TCP", payload="Hello")
-            # gestionnaire_fw.filtrer_paquet(p, port_dest=80)
-            
-        elif choix == "5":
-            print("\n[MONITEUR RÉSEAU] - Module en attente d'intégration (Travail de Samuel).")
-            # Appel futur :
-            # moniteur.afficher_statistiques()
-            # gestionnaire_fw.journal.afficher_journal()
-            
-        elif choix == "0":
-            print("\nFermeture de SIMNet. Au revoir !")
-            sys.exit(0)
+                # Passage par le Firewall avant le routage (simulation de sécurité)
+                if gestionnaire_fw.filtrer_paquet(p):
+                    # Si autorisé, on l'envoie dans le réseau
+                    simulateur.envoyer_paquet(p)
+                else:
+                    print(f"[BLOQUÉ] Le paquet {p} a été rejeté par le Firewall.")
+                    simulateur.stats["paquets_perdus"] += 1
+                
+                # Quoi qu'il arrive, le moniteur garde une trace du paquet
+                moniteur.enregistrer_paquet(p)
+                
+            except ValueError as e:
+                print(f"-> Erreur lors de la création du paquet : {e}")
+        
+        elif choix == '4':
+            gestionnaire_fw.journal.afficher_journal()
+
+        elif choix == '5':
+            moniteur.afficher_surveillance_rapide()
+
+        elif choix == '6':
+            moniteur.generer_rapport()
+
+        elif choix == '7':
+            print("Fermeture de SIMNet. Merci et à bientôt !")
+            break
             
         else:
-            print("\n[ERREUR] Option invalide. Veuillez réessayer.")
+            print("Choix invalide. Veuillez entrer un chiffre entre 1 et 7.")
 
+# C'est ici que le programme démarre réellement
 if __name__ == "__main__":
     main()

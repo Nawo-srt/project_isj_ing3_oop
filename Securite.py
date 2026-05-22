@@ -113,12 +113,12 @@ class GestionnaireFirewall:
         Inspecte un paquet par rapport aux règles. 
         Retourne True si le paquet passe, False s'il est bloqué.
         """
-
+        # On parcourt les règles dans l'ordre de leur ajout (première correspondance appliquée)
         for regle in self.regles:
             if regle.correspond(paquet, port_dest):
                 self.journal.ajouter_log(regle.action, paquet, port_dest, f"Correspond à la règle Src:{regle.ip_source}")
                 return regle.action == "AUTORISER"
 
-        # Par défaut si aucune règle ne correspond : On bloquera le paquet
-        self.journal.ajouter_log("BLOQUER", paquet, port_dest, "Aucune règle correspondante")
-        return False
+        # Par défaut si aucune règle ne correspond : On autorise
+        self.journal.ajouter_log("AUTORISER", paquet, port_dest, "Aucune règle correspondante (Politique par défaut)")
+        return True

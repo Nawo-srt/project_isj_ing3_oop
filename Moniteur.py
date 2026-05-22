@@ -1,127 +1,78 @@
-#FICHIER DU MONITEUR (DASHBOARD) : SAMUEL.
-# moniteur.py
-from collections import deque
 from datetime import datetime
-from typing import List, Tuple, Dict, Optional
-
+from collections import deque
+from Topologie import Topologie
+from Paquets import SimulateurTrafic
 
 class MoniteurReseau:
-    """Surveille l'activite du reseau et genere des rapports."""
-
-    def __init__(self, topologie: object) :
+    """
+    Surveille l'état du réseau, collecte les statistiques 
+    et génère des rapports d'exploitation.
+    """
+    def __init__(self, topologie: Topologie, simulateur: SimulateurTrafic):
+        """
+        Initialise le moniteur en le liant à la topologie et au trafic.
+        """
         self.topologie = topologie
-        self.stats_equipements = {
-            equip.nom: {"transmis": 0, "perdus": 0}
-            for equip in self.topologie.equipements
-            if equip.__class__.__name__ in (
-                "Routeur", "Switch", "Serveur",
-                "PointAccesWifi", "Firewall", "TerminalClient"
-            )
-        }
-        self.stats_liens = {}
+        self.simulateur = simulateur
+        # Une file d'attente qui ne garde que les 10 éléments les plus récents
         self.historique_paquets = deque(maxlen=10)
 
-    def enregistrer_paquet(self, paquet: object, chemin: List[str], succes: bool) :
-        """Met a jour les stats apres chaque transmission de paquet."""
-        for nom_equip in chemin:
-            if nom_equip not in self.stats_equipements:
-                self.stats_equipements[nom_equip] = {"transmis": 0, "perdus": 0}
-            if succes:
-                self.stats_equipements[nom_equip]["transmis"] += 1
-            else:
-                self.stats_equipements[nom_equip]["perdus"] += 1
-        self.historique_paquets.append({
-            "paquet": paquet,
-            "chemin": chemin,
-            "succes": succes,
-            "horodatage": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        })
+    def enregistrer_paquet(self, paquet):
+        """Enregistre un paquet dans l'historique."""
+        self.historique_paquets.append(paquet)
 
-    def enregistrer_lien(self, equip1: str, equip2: str, octets: int) :
-        """Met a jour le trafic sur un lien entre deux equipements."""
-        cle = (equip1, equip2)
-        if cle not in self.stats_liens:
-            lien = self.topologie.get_lien(equip1, equip2)
-            bande_passante = lien.bande_passante if lien else 100
-            self.stats_liens[cle] = {"octets": 0, "bande_passante": bande_passante}
-        self.stats_liens[cle]["octets"] += octets
+    def afficher_surveillance_rapide(self):
+        """Affiche un aperçu de la santé du réseau dans la console."""
+        print("\n--- SURVEILLANCE RÉSEAU EN TEMPS RÉEL ---")
+        actifs = sum(1 for eq in self.topologie.equipements.values() if eq.statut)
+        total = len(self.topologie.equipements)
+        print(f"Équipements en ligne : {actifs}/{total}")
+        print(f"Liens actifs         : {len(self.topologie.liens)}")
+        print(f"Dernier paquet suivi : {self.historique_paquets[-1] if self.historique_paquets else 'Aucun'}")
+        print("-----------------------------------------\n")
 
-    def get_equipements_actifs(self) -> Tuple[List[str], List[str]]:
-        """Retourne deux listes : equipements actifs et inactifs."""
-        actifs = []
-        inactifs = []
-        for equip in self.topologie.equipements:
-            if equip.statut == "actif":
-                actifs.append(equip.nom)
-            else:
-                inactifs.append(equip.nom)
-        return actifs, inactifs
+    def generer_rapport(self, nom_fichier: str = "rapport_simnet.txt"):
+        """
+        Génère un rapport d'exploitation détaillé et l'exporte dans un fichier texte.
+        """
+        equipements_actifs = [eq for eq in self.topologie.equipements.values() if eq.statut]
+        equipements_inactifs = [eq for eq in self.topologie.equipements.values() if not eq.statut]
+        stats_trafic = self.simulateur.stats
 
-    def afficher_statistiques(self) :
-        """Affiche toutes les statistiques dans la console."""
-        print("\n" + "-"*10)
-        print("       STATISTIQUES DU RESEAU - SIMNet")
-        print("-"*10)
+        try:
+            # Ouverture du fichier en mode écriture ('w')
+            with open(nom_fichier, 'w', encoding='utf-8') as fichier:
+                fichier.write("="*50 + "\n")
+                fichier.write("     RAPPORT D'EXPLOITATION SIMNET\n")
+                fichier.write(f"     Généré le : {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+                fichier.write("="*50 + "\n\n")
 
-        actifs, inactifs = self.get_equipements_actifs()
-        print(f"\n[EQUIPEMENTS ACTIFS]   : {', '.join(actifs) if actifs else 'Aucun'}")
-        print(f"[EQUIPEMENTS INACTIFS] : {', '.join(inactifs) if inactifs else 'Aucun'}")
+                fichier.write("1. ÉTAT DES ÉQUIPEMENTS\n")
+                fichier.write("-" * 25 + "\n")
+                fichier.write(f"Total équipements : {len(self.topologie.equipements)}\n")
+                fichier.write(f"Actifs ({len(equipements_actifs)}) : {', '.join([eq.nom for eq in equipements_actifs])}\n")
+                fichier.write(f"Inactifs ({len(equipements_inactifs)}) : {', '.join([eq.nom for eq in equipements_inactifs])}\n\n")
 
-        print("\n[STATISTIQUES PAR EQUIPEMENT]")
-        for nom, stats in self.stats_equipements.items():
-            print(f"  {nom} -> Transmis: {stats['transmis']} | Perdus: {stats['perdus']}")
+                fichier.write("2. STATISTIQUES GLOBALES DE TRAFIC\n")
+                fichier.write("-" * 25 + "\n")
+                fichier.write(f"Paquets envoyés         : {stats_trafic['paquets_envoyes']}\n")
+                fichier.write(f"Paquets perdus          : {stats_trafic['paquets_perdus']}\n")
+                fichier.write(f"Volume transféré        : {stats_trafic['debit_cumule_octets']} octets\n")
+                fichier.write(f"Temps de transit cumulé : {stats_trafic['temps_transit_total_ms']} ms\n\n")
 
-        print("\n[UTILISATION DES LIENS]")
-        if self.stats_liens:
-            for (e1, e2), stats in self.stats_liens.items():
-                taux = (stats["octets"] / (stats["bande_passante"] * 1_000_000)) * 100
-                print(f"  {e1} <-> {e2} -> {stats['octets']} octets | Taux: {taux:.2f}%")
-        else:
-            print("  Aucun lien utilise pour l'instant.")
-
-        print("\n[HISTORIQUE DES 10 DERNIERS PAQUETS]")
-        if self.historique_paquets:
-            for entree in self.historique_paquets:
-                statut = "OK" if entree["succes"] else "PERDU"
-                chemin_str = " -> ".join(entree["chemin"]) if entree["chemin"] else "N/A"
-                print(f"  [{entree['horodatage']}] {entree['paquet'].source} -> "
-                      f"{entree['paquet'].destination} | {statut} | Chemin: {chemin_str}")
-        else:
-            print("  Aucun paquet enregistre.")
-
-        print("-"*10 + "\n")
-
-    def generer_rapport(self) :
-        """Genere un rapport dans rapport_simnet.txt."""
-        actifs, inactifs = self.get_equipements_actifs()
-
-        with open("rapport_simnet.txt", "w") as f:
-            f.write("RAPPORT - SIMNet\n")
-            f.write("-"*10 + "\n\n")
-
-            f.write("EQUIPEMENTS ACTIFS : " + ", ".join(actifs) + "\n")
-            f.write("EQUIPEMENTS INACTIFS : " + ", ".join(inactifs) + "\n\n")
-
-            f.write("STATISTIQUES PAR EQUIPEMENT\n")
-            for nom, stats in self.stats_equipements.items():
-                f.write(f"  {nom} -> Transmis: {stats['transmis']} | Perdus: {stats['perdus']}\n")
-
-            f.write("\nUTILISATION DES LIENS\n")
-            if self.stats_liens:
-                for (e1, e2), stats in self.stats_liens.items():
-                    taux = (stats["octets"] / (stats["bande_passante"] * 1_000_000)) * 100
-                    f.write(f"  {e1} <-> {e2} -> {stats['octets']} octets | Taux: {taux:.2f}%\n")
-            else:
-                f.write("  Aucun lien utilise.\n")
-
-            f.write("\nHISTORIQUE DES 10 DERNIERS PAQUETS\n")
-            if self.historique_paquets:
-                for entree in self.historique_paquets:
-                    statut = "OK" if entree["succes"] else "PERDU"
-                    chemin_str = " -> ".join(entree["chemin"]) if entree["chemin"] else "N/A"
-                    f.write(f"  [{entree['horodatage']}] {entree['paquet'].source} -> "
-                            f"{entree['paquet'].destination} | {statut} | Chemin: {chemin_str}\n")
-            else:
-                f.write("  Aucun paquet enregistre.\n")
-
-        print("Rapport genere : rapport_simnet.txt")
+                fichier.write("3. HISTORIQUE DES DERNIERS PAQUETS (Max 10)\n")
+                fichier.write("-" * 25 + "\n")
+                if not self.historique_paquets:
+                    fichier.write("Aucun paquet n'a transité sur le réseau.\n")
+                else:
+                    for idx, p in enumerate(self.historique_paquets, 1):
+                        fichier.write(f"{idx}. {p}\n")
+                
+                fichier.write("\n" + "="*50 + "\n")
+                fichier.write("FIN DU RAPPORT\n")
+                fichier.write("="*50 + "\n")
+            
+            print(f"[SUCCÈS] Le rapport a été généré et sauvegardé : {nom_fichier}")
+            
+        except Exception as e:
+            print(f"[ERREUR] Impossible d'écrire le fichier de rapport : {e}")
