@@ -8,10 +8,10 @@ class Lien:
         """
         Initialise un lien entre deux équipements.
         
-        :param eq1: Le premier équipement.
-        :param eq2: Le deuxième équipement.
-        :param bande_passante: La bande passante du lien en Mbps.
-        :param latence: La latence du lien en millisecondes (ms).
+        eq1: Le premier équipement.
+        eq2: Le deuxième équipement.
+        bande_passante: La bande passante du lien en Mbps.
+        latence: La latence du lien en millisecondes (ms).
         """
         self.equipement1 = eq1
         self.equipement2 = eq2
