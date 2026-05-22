@@ -2,11 +2,13 @@
 # moniteur.py
 from collections import deque
 from datetime import datetime
+from typing import List, Tuple, Dict, Optional
+
 
 class MoniteurReseau:
     """Surveille l'activite du reseau et genere des rapports."""
 
-    def __init__(self, topologie):
+    def __init__(self, topologie: object) :
         self.topologie = topologie
         self.stats_equipements = {
             equip.nom: {"transmis": 0, "perdus": 0}
@@ -19,7 +21,7 @@ class MoniteurReseau:
         self.stats_liens = {}
         self.historique_paquets = deque(maxlen=10)
 
-    def enregistrer_paquet(self, paquet, chemin, succes):
+    def enregistrer_paquet(self, paquet: object, chemin: List[str], succes: bool) :
         """Met a jour les stats apres chaque transmission de paquet."""
         for nom_equip in chemin:
             if nom_equip not in self.stats_equipements:
@@ -35,7 +37,7 @@ class MoniteurReseau:
             "horodatage": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         })
 
-    def enregistrer_lien(self, equip1, equip2, octets):
+    def enregistrer_lien(self, equip1: str, equip2: str, octets: int) :
         """Met a jour le trafic sur un lien entre deux equipements."""
         cle = (equip1, equip2)
         if cle not in self.stats_liens:
@@ -44,7 +46,7 @@ class MoniteurReseau:
             self.stats_liens[cle] = {"octets": 0, "bande_passante": bande_passante}
         self.stats_liens[cle]["octets"] += octets
 
-    def get_equipements_actifs(self):
+    def get_equipements_actifs(self) -> Tuple[List[str], List[str]]:
         """Retourne deux listes : equipements actifs et inactifs."""
         actifs = []
         inactifs = []
@@ -55,7 +57,7 @@ class MoniteurReseau:
                 inactifs.append(equip.nom)
         return actifs, inactifs
 
-    def afficher_statistiques(self):
+    def afficher_statistiques(self) :
         """Affiche toutes les statistiques dans la console."""
         print("\n" + "-"*10)
         print("       STATISTIQUES DU RESEAU - SIMNet")
@@ -89,12 +91,11 @@ class MoniteurReseau:
 
         print("-"*10 + "\n")
 
-    def generer_rapport(self):
+    def generer_rapport(self) :
         """Genere un rapport dans rapport_simnet.txt."""
         actifs, inactifs = self.get_equipements_actifs()
 
         with open("rapport_simnet.txt", "w") as f:
-
             f.write("RAPPORT - SIMNet\n")
             f.write("-"*10 + "\n\n")
 
@@ -124,9 +125,3 @@ class MoniteurReseau:
                 f.write("  Aucun paquet enregistre.\n")
 
         print("Rapport genere : rapport_simnet.txt")
-
-
-
-
-
-
