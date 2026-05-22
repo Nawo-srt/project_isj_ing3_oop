@@ -1,6 +1,5 @@
 from abc import abstractmethod
 
-
 class Equipement(ABC) :
     """Modélise un équipement réseau : chaque équipement a un nom, une marque, une adresse IP et un état (actif ou inactif)"""
     
