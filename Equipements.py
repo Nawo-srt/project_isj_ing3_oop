@@ -1,4 +1,4 @@
-class Equipement(ABC) :
+class Equipement() :
     """Modélise un équipement réseau : chaque équipement a un nom, une marque, une adresse IP et un état (actif ou inactif)"""
     
     def __init__ (self, nom, marque, adresse_ip) :
