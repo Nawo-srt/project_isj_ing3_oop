@@ -1,8 +1,8 @@
 from Topologie import Topologie
-from Equipements import Routeur, Client, Serveur, Firewall
+from Equipements import Routeur, Client, Serveur, Firewall, Switch, PointAccesWiFi
 from Paquets import Paquet, SimulateurTrafic
 from Moniteur import MoniteurReseau
-from Securite import GestionnaireFirewall
+from Securite import GestionnaireFirewall, RegleFiltrage
 
 def afficher_menu():
     """Affiche les options disponibles pour l'utilisateur."""
@@ -10,12 +10,14 @@ def afficher_menu():
     print("      SIMNet - Menu Principal (Module 5)")
     print("="*45)
     print("1. Afficher la topologie du réseau")
-    print("2. Ajouter un nouvel équipement (Client)")
-    print("3. Envoyer un paquet de données")
-    print("4. Consulter le journal de sécurité (Firewall)")
-    print("5. Afficher la surveillance réseau (Temps réel)")
-    print("6. Générer le rapport d'exploitation (.txt)")
-    print("7. Quitter le simulateur")
+    print("2. Ajouter un nouvel équipement au réseau")
+    print("3. Créer un lien entre deux équpements")
+    print("4. Envoyer un paquet de données")
+    print("5. Consulter le journal de sécurité (Firewall)")
+    print("6. Afficher la surveillance réseau (Temps réel)")
+    print("7. Générer le rapport d'exploitation (.txt)")
+    print("8. Ajouter une règle de filtrage")
+    print("9. Quitter le simulateur")
     print("="*45)
 
 def main():
@@ -46,21 +48,75 @@ def main():
     # 3. Boucle du menu interactif
     while True:
         afficher_menu()
-        choix = input("Votre choix (1-7) : ")
+        choix = input("Votre choix (1-9) : ")
 
         if choix == '1':
             topologie.afficher_topologie()
             
         elif choix == '2':
-            nom = input("Nom du nouveau client (ex: PC-Bob) : ")
+            type = input("Type d'équipement à ajouter (Client/Serveur/Routeur/Switch/Point d'Accès/Firewall) : ").strip().lower()
+            nom = input("Nom du nouvel équipement : ").strip()
+            marque = input("Marque (ex: Lenovo, HP, Cisco) : ").strip() 
             ip = input("Adresse IP (ex: 192.168.0.11) : ")
-            nouveau_client = Client(nom, "Lenovo", ip)
-            topologie.ajouter_equipement(nouveau_client)
+            if type == "client":
+                nouveau_equipement = Client(nom, marque, ip)
+            elif type == "serveur":
+                nouveau_equipement = Serveur(nom, marque, ip)
+            elif type == "routeur":
+                nouveau_equipement = Routeur(nom, marque, ip)
+            elif type == "switch":
+                nouveau_equipement = Switch(nom, marque, ip)
+            elif type == "point d'accès":
+                nouveau_equipement = PointAccesWiFi(nom, marque, ip)
+            elif type == "firewall":
+                nouveau_equipement = Firewall(nom, marque, ip)
+            else:
+                print("Type d'équipement non reconnu.")
+                continue
+            topologie.ajouter_equipement(nouveau_equipement)
             # On le relie automatiquement au routeur pour simplifier
             topologie.ajouter_lien(nom, "Routeur-Core", 100, 5)
             print(f"-> {nom} ajouté et connecté au Routeur-Core !")
 
         elif choix == '3':
+            # Vérification préalable : il faut au moins 2 équipements pour faire un lien !
+            if len(topologie.equipements) < 2:
+                print("[ERREUR] Il faut au moins 2 équipements dans la topologie pour créer un lien.")
+                continue
+                
+            # Affichage rapide des équipements disponibles pour aider l'utilisateur
+            print(f"Équipements configurés : {', '.join(topologie.equipements.keys())}")
+            
+            nom_eq1 = input("Nom du premier équipement : ").strip()
+            nom_eq2 = input("Nom du deuxième équipement : ").strip()
+            
+            # Interdiction de relier un équipement à lui-même (Boucle locale)
+            if nom_eq1.lower() == nom_eq2.lower():
+                print("[ERREUR] Impossible de créer un lien d'un équipement vers lui-même.")
+                continue
+                
+            # Vérification de l'existence des deux extrémités dans le dictionnaire de la topologie
+            if nom_eq1 not in topologie.equipements or nom_eq2 not in topologie.equipements:
+                print("[ERREUR] L'un des deux équipements (ou les deux) n'existe pas dans la topologie.")
+                continue
+                
+            # Collecte et validation des métriques physiques du câble
+            try:
+                bp = int(input("Bande passante du lien (en Mbps, ex: 100, 1000) : "))
+                latence = int(input("Latence du lien (en ms, ex: 5, 20) : "))
+                
+                if bp <= 0 or latence < 0:
+                    print("[ERREUR] Les valeurs physiques doivent être positives (BP > 0, Latence >= 0).")
+                    continue
+                
+                # Appel de la méthode métier du module Topologie
+                topologie.ajouter_lien(nom_eq1, nom_eq2, bp, latence)
+                print(f"[SUCCÈS] Lien physique établi : {nom_eq1} <---> {nom_eq2} ({bp} Mbps, {latence} ms)")
+                
+            except ValueError:
+                print("[ERREUR SAISIE] La bande passante et la latence doivent être des nombres entiers.")
+
+        elif choix == '4':
             ip_src = input("IP Source (ex: 192.168.0.10 pour Alice) : ")
             ip_dst = input("IP Destination (ex: 192.168.0.100 pour Serveur-Web) : ")
             proto = input("Protocole (TCP/UDP/ICMP) : ").upper()
@@ -82,16 +138,27 @@ def main():
             except ValueError as e:
                 print(f"-> Erreur lors de la création du paquet : {e}")
         
-        elif choix == '4':
+        elif choix == '5':
             gestionnaire_fw.journal.afficher_journal()
 
-        elif choix == '5':
+        elif choix == '6':
             moniteur.afficher_surveillance_rapide()
 
-        elif choix == '6':
+        elif choix == '7':
             moniteur.generer_rapport()
 
-        elif choix == '7':
+        elif choix == '8':
+            login = input("Identifiant administrateur : ")
+            mdp = input("Mot de passe : ")
+            gestionnaire_fw.se_connecter(login, mdp)
+            ip_src = input("IP Source (ex: 10.0.0.50 ou 'any') : ").strip()
+            proto = input("Protocole (TCP/UDP/ICMP ou 'any') : ").strip().upper()
+            port = input("Port de Destination (ex: 80 ou 'any') : ").strip()
+            action = input("Action (AUTORISER/BLOQUER) : ").strip().upper()
+            nouvelle_regle = RegleFiltrage(ip_src, proto, port, action)
+            gestionnaire_fw.ajouter_regle_securisee(nouvelle_regle)
+            
+        elif choix == '9':
             print("Fermeture de SIMNet. Merci et à bientôt !")
             break
             

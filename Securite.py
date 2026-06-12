@@ -13,10 +13,23 @@ class RegleFiltrage:
         port_dest: Un entier sous forme de chaîne (ex: '80') ou 'any'.
         action: 'AUTORISER' ou 'BLOQUER'.
         """
+
+        protocole = protocole.upper()
+        if protocole not in ["TCP", "UDP", "ICMP", "ANY"]:
+            raise ValueError("Le protocole doit être TCP, UDP, ICMP ou ANY.")
+        action = action.upper()
+        if action not in ["AUTORISER", "BLOQUER"]:
+            raise ValueError("L'action doit être AUTORISER ou BLOQUER.")
+        ip_source = ip_source.upper()
+        if ip_source != "ANY":
+            try:
+                ipaddress.ip_network(ip_source, strict=False)
+            except ValueError:
+                raise ValueError("IP source ou réseau non valide.")
         self.ip_source = ip_source
-        self.protocole = protocole.upper()
+        self.protocole = protocole
         self.port_dest = port_dest
-        self.action = action.upper()
+        self.action = action
 
     def correspond(self, paquet: Paquet, port_paquet: int) -> bool:
         """

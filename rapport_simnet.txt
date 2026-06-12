@@ -1,0 +1,26 @@
+==================================================
+     RAPPORT D'EXPLOITATION SIMNET
+     Généré le : 2026-06-11 14:23:49
+==================================================
+
+1. ÉTAT DES ÉQUIPEMENTS
+-------------------------
+Total équipements : 4
+Actifs (4) : Routeur-Core, PC-Alice, Serveur-Web, FW-Entreprise
+Inactifs (0) : 
+
+2. STATISTIQUES GLOBALES DE TRAFIC
+-------------------------
+Paquets envoyés         : 1
+Paquets perdus          : 1
+Volume transféré        : 512 octets
+Temps de transit cumulé : 4 ms
+
+3. HISTORIQUE DES DERNIERS PAQUETS (Max 10)
+-------------------------
+1. Paquet TCP [192.168.0.10 -> 192.168.0.100] | Taille: 512 octets | Priorité: 3
+2. Paquet TCP [192.168.0.100 -> 192.168.0.10] | Taille: 512 octets | Priorité: 3
+
+==================================================
+FIN DU RAPPORT
+==================================================
